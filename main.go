@@ -1,84 +1,81 @@
 package main
 
 import (
-	// "encoding/json"
+	"encoding/json"
 	"fmt"
 )
 
 func main() {
-	text := "aaa"
-	ac := newTrie()
+	text := "she"
+	ac := newAhoCorasick()
 	ac.insert("she")
-	ac.insert("his")
 	ac.insert("hers")
 	ac.insert("hes")
-	// fmt.Println("res")
-	// fmt.Println("")
 	res := ac.match(text)
 
 	fmt.Println(res)
 }
 
-type AhoCorasick struct{}
-
 type Trie struct {
-	Key      int             `json:"key"`
-	Children map[string]Trie `json:"children"`
+	Key      rune           `json:"key"`
+	Children map[rune]*Trie `json:"children"`
+	Failure  *Trie          `json:"failure"`
+	Output   []string       `json:"output"`
 }
 
-type Res struct {
-	Key  int    `json:"key"`
-	Text string `json:"text"`
+type AhoCorasick struct {
+	root *Trie
 }
 
-var key int
-
-func newTrie() Trie {
-	return Trie{
-		Key:      0,
-		Children: make(map[string]Trie),
+func newAhoCorasick() AhoCorasick {
+	return AhoCorasick{
+		root: newTrie(0),
 	}
 }
 
-func NewAhoCorasick(text string) AhoCorasick {
-	return AhoCorasick{}
+func newTrie(char rune) *Trie {
+	return &Trie{
+		Key:      char,
+		Children: make(map[rune]*Trie),
+		Failure:  nil,
+		Output:   []string{},
+	}
 }
 
-func (t Trie) insert(word string) {
+func (ac AhoCorasick) insert(word string) {
+	node := ac.root
 	for _, v := range word {
-		if node, ok := t.Children[string(v)]; ok {
-			t = node
-		} else {
-			key++
-			t.Children[string(v)] = Trie{
-				Key:      key,
-				Children: make(map[string]Trie),
+		if _, ok := node.Children[v]; !ok {
+			node.Children[v] = &Trie{
+				Key:      v,
+				Children: make(map[rune]*Trie),
 			}
-			t = t.Children[string(v)]
 		}
+		node = node.Children[v]
 	}
 }
 
-func (t Trie) match(word string) string {
-	node := t
-	// fmt.Println(node)
-	// byteArray, err := json.MarshalIndent(node, "", "	")
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
-
-	// fmt.Println(string(byteArray))
+func (ac AhoCorasick) match(word string) string {
+	node := ac.root
+	byteArray, err := json.MarshalIndent(node, "", "	")
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(string(byteArray))
 
 	var res string
 	for _, v := range word {
-		if next, ok := node.Children[string(v)]; ok {
-			// fmt.Println(node.Key)
+		if next, ok := node.Children[v]; ok {
 			node = next
 			res = res + string(v)
 		} else {
-			// fmt.Println(node.Key)
+			// node =
 			return ""
 		}
 	}
 	return res
+}
+
+func (t AhoCorasick) buildFailure() {
+
 }
